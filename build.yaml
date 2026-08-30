@@ -7,9 +7,9 @@ framework: "net9.0"
 owner: "bpifer"
 overview: "One-way Jellyfin to Trakt watched-state sync"
 description: >
-  Syncs watched movies and episodes from Jellyfin to Trakt.tv.
-  Ported from a standalone Python script; preserves original watch
-  timestamps and de-duplicates against Trakt watch history.
+  Syncs watched movies and episodes from Jellyfin to Trakt.tv, preserving each
+  item's original watch timestamp and submitting only what is not already in
+  your Trakt watch history.
 category: "General"
 artifacts:
   - "Jellyfin.Plugin.TraktSync.dll"

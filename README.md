@@ -2,37 +2,32 @@
 
 One-way sync of watched movies and episodes from Jellyfin to [Trakt.tv](https://trakt.tv).
 
-Ported from a standalone Python script to a native Jellyfin plugin. Because it runs
-inside the server it uses Jellyfin's internal APIs directly, so **no Jellyfin API key
-is required** anywhere in the configuration.
+Because it runs inside the server, it reads watched state through Jellyfin's internal
+APIs — **no Jellyfin API key is required** anywhere in the configuration.
 
 ## Features
 
-- Pushes watched **movies** and **episodes** to Trakt, preserving the original
-  `watched_at` timestamp from Jellyfin.
-- **De-duplicates against Trakt watch history**, so only genuinely new items are sent.
-- **Split-show overrides** for series that Jellyfin/TVDB treat as one continuous show
-  but Trakt splits into several (for example *The Great British Bake Off*).
-- **Library exclusion**, for content that does not exist on Trakt (a YouTube library,
-  for instance).
-- **Dry run** mode that logs exactly what would be sent without writing to Trakt.
-- Automatic OAuth token refresh, only within 7 days of expiry so single-use refresh
-  tokens are not burned on every run.
+- Pushes watched **movies** and **episodes** to Trakt, preserving each item's original
+  watch timestamp from Jellyfin rather than stamping everything with the sync time.
+- **De-duplicates against your Trakt watch history**, so each run submits only what is
+  genuinely new.
+- **Split-show overrides** for series that Jellyfin and TVDB treat as one continuous show
+  but Trakt lists as several separate entries, with a per-season offset so episodes land
+  in the right place.
+- **Library exclusion** for content that does not exist on Trakt — a YouTube or home
+  video library, for example.
+- **Dry run** mode that logs exactly what would be sent without writing anything.
+- Automatic OAuth token refresh, performed only within 7 days of expiry so single-use
+  refresh tokens are not consumed on every run.
 
-## Two bugs worth knowing about
+## Safe to run against an existing Trakt account
 
-The original script re-sent the entire watched library every night. Two causes, both
-fixed here and commented in the source so they do not regress:
+The plugin only ever adds to Trakt; it never removes or overwrites anything. Because it
+submits each item's real watch timestamp, Trakt recognises entries it already holds and
+does not create duplicate history.
 
-1. **`/sync/watched/shows` returns no season or episode data.** Every episode set came
-   back empty, so the de-duplication check could never match. Per-episode state is now
-   built from paginated `/sync/history/episodes` instead.
-2. **Pagination was ignored.** Trakt defaults to 100 items per page, so only the first
-   page of watched shows was ever read.
-
-This is safe to run against an existing Trakt account: because the original
-`watched_at` timestamp is sent, Trakt de-duplicates server side and does not create
-duplicate history entries.
+If you would like to confirm that for yourself before it writes anything, enable **Dry
+run** and trigger the task manually — it logs the full set of items it would submit.
 
 ## Installation
 
@@ -53,40 +48,44 @@ Then install **Trakt Sync** from the catalogue and restart Jellyfin.
 | Client ID / secret | From your [Trakt API application](https://trakt.tv/oauth/applications) |
 | Access / refresh token | Obtained via the Trakt OAuth flow |
 | Token expires at | Unix timestamp; set to `0` to force a refresh on the next run |
-| Jellyfin user ID | **Required.** No fallback by design, see below |
-| Excluded library ID | Optional |
+| Jellyfin user ID | **Required.** See below |
+| Excluded library ID | Optional. Accepts either a library id or a folder id |
+| Shows per request | How many shows are submitted per Trakt call. Default `100` |
 | Dry run | Log what would be sent, write nothing |
 
-The plugin will **not** guess which user to sync. Falling back to an arbitrary account
-would push someone else's watch history into the configured Trakt profile, which cannot
-be undone from Jellyfin. If the user ID is unset it logs a warning and stops.
+The plugin will **not** guess which user to sync, and does not fall back to an arbitrary
+account if the field is left blank. Picking the wrong user would push someone else's watch
+history into your Trakt profile, which cannot be undone from Jellyfin. If no user is set,
+it logs a warning and stops.
 
-Runs daily at 07:00 by default: **Dashboard → Scheduled Tasks → Trakt**.
+The sync runs daily at 07:00 by default. Adjust or trigger it from
+**Dashboard → Scheduled Tasks → Trakt**, and read its output in the Jellyfin log.
 
 ## Building
 
-Requires the .NET 9 SDK (Jellyfin 10.11 targets `net9.0`):
+Requires the .NET 9 SDK, since Jellyfin 10.11 targets `net9.0`:
 
 ```bash
 dotnet build Jellyfin.Plugin.TraktSync/Jellyfin.Plugin.TraktSync.csproj -c Release -o out
 ```
 
-Or without installing anything locally:
+Or with no local toolchain:
 
 ```bash
 docker run --rm -v "$PWD":/src -w /src mcr.microsoft.com/dotnet/sdk:9.0 \
   dotnet build Jellyfin.Plugin.TraktSync/Jellyfin.Plugin.TraktSync.csproj -c Release -o /src/out
 ```
 
-Copy `out/Jellyfin.Plugin.TraktSync.dll` plus a `meta.json` into
-`/var/lib/jellyfin/plugins/Trakt Sync_<version>/` and restart the server.
+To install a local build, copy `out/Jellyfin.Plugin.TraktSync.dll` together with a
+`meta.json` into `/var/lib/jellyfin/plugins/Trakt Sync_<version>/` and restart the server.
 
 ## Compatibility
 
 Built against **Jellyfin 10.11.x** (`Jellyfin.Controller` 10.11.11, `net9.0`).
-The package reference must match your server version or the plugin shows as
-*NotSupported*.
+
+The `Jellyfin.Controller` package version must match your server version, otherwise the
+plugin is reported as *NotSupported* and will not load.
 
 ## License
 
-GPL-3.0.
+GPL-3.0. See [LICENSE](LICENSE).
