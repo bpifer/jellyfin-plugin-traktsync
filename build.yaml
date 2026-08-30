@@ -1,0 +1,16 @@
+---
+name: "Trakt Sync"
+guid: "b8f2a1c4-6d3e-4f7a-9c25-1e8b7d4a3f60"
+version: "1.0.0.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
+owner: "bpifer"
+overview: "One-way Jellyfin to Trakt watched-state sync"
+description: >
+  Syncs watched movies and episodes from Jellyfin to Trakt.tv.
+  Ported from a standalone Python script; preserves original watch
+  timestamps and de-duplicates against Trakt watch history.
+category: "General"
+artifacts:
+  - "Jellyfin.Plugin.TraktSync.dll"
+changelog: "Initial release."

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Trakt Sync</title>
+</head>
+<body>
+<div id="TraktSyncConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-controller="__plugin/TraktSync/configPage.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="TraktSyncConfigForm">
+
+                <h2>Trakt application</h2>
+                <div class="inputContainer">
+                    <input is="emby-input" type="text" id="TraktClientId" label="Client ID" />
+                    <div class="fieldDescription">From your Trakt API application.</div>
+                </div>
+                <div class="inputContainer">
+                    <input is="emby-input" type="password" id="TraktClientSecret" label="Client secret" />
+                </div>
+
+                <h2>Authorization</h2>
+                <div class="inputContainer">
+                    <input is="emby-input" type="password" id="TraktAccessToken" label="Access token" />
+                </div>
+                <div class="inputContainer">
+                    <input is="emby-input" type="password" id="TraktRefreshToken" label="Refresh token" />
+                    <div class="fieldDescription">
+                        Refreshed automatically within 7 days of expiry and saved back here.
+                    </div>
+                </div>
+                <div class="inputContainer">
+                    <input is="emby-input" type="number" id="TraktTokenExpiresAt" label="Token expires at (unix)" />
+                    <div class="fieldDescription">Set to 0 to force a refresh on the next run.</div>
+                </div>
+
+                <h2>Sync options</h2>
+                <div class="inputContainer">
+                    <input is="emby-input" type="text" id="JellyfinUserId" label="Jellyfin user ID" />
+                    <div class="fieldDescription">Leave blank to use the first user account.</div>
+                </div>
+                <div class="inputContainer">
+                    <input is="emby-input" type="text" id="ExcludeLibraryId" label="Excluded library ID" />
+                    <div class="fieldDescription">
+                        Optional. Content in this library is never sent to Trakt, e.g. a YouTube library.
+                    </div>
+                </div>
+                <div class="inputContainer">
+                    <input is="emby-input" type="number" id="BatchSize" label="Shows per request" />
+                </div>
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input is="emby-checkbox" type="checkbox" id="DryRun" />
+                        <span>Dry run</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        Log what would be sent without writing anything to Trakt.
+                    </div>
+                </div>
+
+                <div>
+                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                        <span>Save</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function () {
+            var pluginId = 'b8f2a1c4-6d3e-4f7a-9c25-1e8b7d4a3f60';
+
+            function load(page, config) {
+                page.querySelector('#TraktClientId').value = config.TraktClientId || '';
+                page.querySelector('#TraktClientSecret').value = config.TraktClientSecret || '';
+                page.querySelector('#TraktAccessToken').value = config.TraktAccessToken || '';
+                page.querySelector('#TraktRefreshToken').value = config.TraktRefreshToken || '';
+                page.querySelector('#TraktTokenExpiresAt').value = config.TraktTokenExpiresAt || 0;
+                page.querySelector('#JellyfinUserId').value = config.JellyfinUserId || '';
+                page.querySelector('#ExcludeLibraryId').value = config.ExcludeLibraryId || '';
+                page.querySelector('#BatchSize').value = config.BatchSize || 100;
+                page.querySelector('#DryRun').checked = config.DryRun === true;
+            }
+
+            document.querySelector('#TraktSyncConfigPage')
+                .addEventListener('pageshow', function () {
+                    var page = this;
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        load(page, config);
+                        Dashboard.hideLoadingMsg();
+                    });
+                });
+
+            document.querySelector('#TraktSyncConfigForm')
+                .addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    Dashboard.showLoadingMsg();
+                    var page = document.querySelector('#TraktSyncConfigPage');
+
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        config.TraktClientId = page.querySelector('#TraktClientId').value;
+                        config.TraktClientSecret = page.querySelector('#TraktClientSecret').value;
+                        config.TraktAccessToken = page.querySelector('#TraktAccessToken').value;
+                        config.TraktRefreshToken = page.querySelector('#TraktRefreshToken').value;
+                        config.TraktTokenExpiresAt = parseInt(
+                            page.querySelector('#TraktTokenExpiresAt').value, 10) || 0;
+                        config.JellyfinUserId = page.querySelector('#JellyfinUserId').value;
+                        config.ExcludeLibraryId = page.querySelector('#ExcludeLibraryId').value;
+                        config.BatchSize = parseInt(page.querySelector('#BatchSize').value, 10) || 100;
+                        config.DryRun = page.querySelector('#DryRun').checked;
+
+                        ApiClient.updatePluginConfiguration(pluginId, config)
+                            .then(Dashboard.processPluginConfigurationUpdateResult);
+                    });
+
+                    return false;
+                });
+        })();
+    </script>
+</div>
+</body>
+</html>
