@@ -163,6 +163,19 @@ public class TraktSyncTask : IScheduledTask
     private static Guid? ParseGuid(string value)
         => Guid.TryParse(value, out var id) ? id : null;
 
+    /// <summary>
+    /// Determines whether an item sits anywhere under the excluded folder.
+    /// </summary>
+    /// <remarks>
+    /// The configured id may be either the library (collection folder) or the
+    /// physical folder directly containing the series - the original script
+    /// compared against the series' immediate ParentId, so existing configs hold
+    /// the latter. Walking the whole ancestor chain accepts both rather than
+    /// silently matching nothing.
+    /// </remarks>
+    /// <param name="item">Item to test.</param>
+    /// <param name="excludeId">Configured excluded folder id.</param>
+    /// <returns>True when the item is excluded.</returns>
     private static bool IsExcluded(BaseItem? item, Guid? excludeId)
     {
         if (excludeId is null || item is null)
@@ -170,7 +183,25 @@ public class TraktSyncTask : IScheduledTask
             return false;
         }
 
-        return item.GetTopParent()?.Id == excludeId.Value;
+        if (item.ParentId == excludeId.Value)
+        {
+            return true;
+        }
+
+        if (item.GetTopParent()?.Id == excludeId.Value)
+        {
+            return true;
+        }
+
+        foreach (var ancestor in item.GetParents())
+        {
+            if (ancestor.Id == excludeId.Value)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

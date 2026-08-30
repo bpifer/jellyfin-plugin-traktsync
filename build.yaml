@@ -1,7 +1,7 @@
 ---
 name: "Trakt Sync"
 guid: "b8f2a1c4-6d3e-4f7a-9c25-1e8b7d4a3f60"
-version: "1.0.0.0"
+version: "1.0.1.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 owner: "bpifer"

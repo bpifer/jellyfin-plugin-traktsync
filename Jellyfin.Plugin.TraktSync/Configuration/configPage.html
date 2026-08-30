@@ -5,8 +5,7 @@
     <title>Trakt Sync</title>
 </head>
 <body>
-<div id="TraktSyncConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
-     data-controller="__plugin/TraktSync/configPage.js">
+<div id="TraktSyncConfigPage" data-role="page" class="page type-interior pluginConfigurationPage">
     <div data-role="content">
         <div class="content-primary">
             <form id="TraktSyncConfigForm">
@@ -84,15 +83,22 @@
                 page.querySelector('#DryRun').checked = config.DryRun === true;
             }
 
-            document.querySelector('#TraktSyncConfigPage')
-                .addEventListener('pageshow', function () {
-                    var page = this;
-                    Dashboard.showLoadingMsg();
-                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-                        load(page, config);
-                        Dashboard.hideLoadingMsg();
-                    });
+            var pageEl = document.querySelector('#TraktSyncConfigPage');
+
+            function fetchAndLoad() {
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    load(pageEl, config);
+                    Dashboard.hideLoadingMsg();
                 });
+            }
+
+            // Jellyfin fires different lifecycle events depending on how the
+            // page is reached (first navigation vs returning to a cached view),
+            // and may have fired already by the time this script parses. Bind
+            // both and also run once immediately so the fields are never blank.
+            pageEl.addEventListener('pageshow', fetchAndLoad);
+            pageEl.addEventListener('viewshow', fetchAndLoad);
+            fetchAndLoad();
 
             document.querySelector('#TraktSyncConfigForm')
                 .addEventListener('submit', function (e) {
