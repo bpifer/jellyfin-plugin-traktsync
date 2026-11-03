@@ -547,12 +547,15 @@ public class TraktSyncTask : IScheduledTask
                 continue;
             }
 
-            foreach (var entry in category.Value.EnumerateArray())
+            // Trakt repeats the parent show once per missing episode, so collapse duplicates.
+            foreach (var group in category.Value.EnumerateArray()
+                .Select(DescribeNotFound)
+                .GroupBy(d => d, StringComparer.Ordinal))
             {
                 _logger.LogWarning(
                     "Trakt could not match {Category} item: {Item}",
                     category.Name,
-                    DescribeNotFound(entry));
+                    group.Key);
             }
         }
     }

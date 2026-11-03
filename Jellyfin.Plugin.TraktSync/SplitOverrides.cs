@@ -35,9 +35,14 @@ public static class SplitOverrides
         },
 
         // Monster (Netflix anthology), tvdb:389492.
-        // S3 Ed Gein is a separate Trakt show whose season 1 is TVDB season 3.
+        // Each TVDB season is a separate Trakt show. All three need rules: the
+        // series' own imdb id resolves on Trakt to a one-episode placeholder and
+        // its tmdb id to the unrelated Lizzie Borden season, so without a rule
+        // S1 episodes were rejected or attached to the wrong show.
         ["389492"] = new()
         {
+            new SplitRule(1, 0, null, 113988, 167797, "DAHMER - Monster: The Jeffrey Dahmer Story"),
+            new SplitRule(2, -1, "tt31896788", 225634, 206920, "Monsters: The Lyle and Erik Menendez Story"),
             new SplitRule(3, -2, null, 286801, 279819, "Monster: The Ed Gein Story"),
         },
 
