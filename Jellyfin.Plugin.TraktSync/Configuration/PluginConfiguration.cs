@@ -27,7 +27,7 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>
     /// Gets or sets the Jellyfin user whose watched state is synced.
-    /// Empty means "the first administrator account".
+    /// Required: when empty or unknown the sync is skipped rather than guessing a user.
     /// </summary>
     public string JellyfinUserId { get; set; } = string.Empty;
 

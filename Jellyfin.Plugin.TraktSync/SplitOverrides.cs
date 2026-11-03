@@ -40,6 +40,21 @@ public static class SplitOverrides
         {
             new SplitRule(3, -2, null, 286801, 279819, "Monster: The Ed Gein Story"),
         },
+
+        // Jury Duty, tvdb:432093.
+        // TVDB S2 (2026) is the separate Trakt show "Jury Duty Presents: Company Retreat" S1.
+        ["432093"] = new()
+        {
+            new SplitRule(2, -1, null, 312697, 315568, "Jury Duty Presents: Company Retreat"),
+        },
+
+        // Kitchen Nightmares (US), tvdb:80552.
+        // TVDB S1-S6 are the 2007 run; TVDB S7+ (2023 revival) is the separate
+        // Trakt show "Kitchen Nightmares" (2023), so TVDB S9 is Trakt S3.
+        ["80552"] = new()
+        {
+            new SplitRule(7, -6, "tt32436778", 235884, 210181, "Kitchen Nightmares"),
+        },
     };
 
     /// <summary>

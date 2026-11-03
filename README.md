@@ -17,8 +17,11 @@ APIs — **no Jellyfin API key is required** anywhere in the configuration.
 - **Library exclusion** for content that does not exist on Trakt — a YouTube or home
   video library, for example.
 - **Dry run** mode that logs exactly what would be sent without writing anything.
-- Automatic OAuth token refresh, performed only within 7 days of expiry so single-use
-  refresh tokens are not consumed on every run.
+- **Reports what Trakt rejects.** Anything Trakt cannot match is logged as a warning
+  with its title, ids and episode codes, so a show that needs a split override is easy
+  to spot.
+- Automatic OAuth token refresh. Trakt access tokens last 7 days; the plugin refreshes
+  only within 2 days of expiry, so single-use refresh tokens are not rotated on every run.
 
 ## Safe to run against an existing Trakt account
 
@@ -63,7 +66,7 @@ The sync runs daily at 07:00 by default. Adjust or trigger it from
 
 ## Building
 
-Requires the .NET 9 SDK, since Jellyfin 10.11 targets `net9.0`:
+Requires the .NET 10 SDK, since Jellyfin 12 targets `net10.0`:
 
 ```bash
 dotnet build Jellyfin.Plugin.TraktSync/Jellyfin.Plugin.TraktSync.csproj -c Release -o out
@@ -72,7 +75,7 @@ dotnet build Jellyfin.Plugin.TraktSync/Jellyfin.Plugin.TraktSync.csproj -c Relea
 Or with no local toolchain:
 
 ```bash
-docker run --rm -v "$PWD":/src -w /src mcr.microsoft.com/dotnet/sdk:9.0 \
+docker run --rm -v "$PWD":/src -w /src mcr.microsoft.com/dotnet/sdk:10.0 \
   dotnet build Jellyfin.Plugin.TraktSync/Jellyfin.Plugin.TraktSync.csproj -c Release -o /src/out
 ```
 
@@ -81,7 +84,8 @@ To install a local build, copy `out/Jellyfin.Plugin.TraktSync.dll` together with
 
 ## Compatibility
 
-Built against **Jellyfin 10.11.x** (`Jellyfin.Controller` 10.11.11, `net9.0`).
+Built against **Jellyfin 12.x** (`Jellyfin.Controller` 12.0.x, `net10.0`). Use v1.0.1.0
+for Jellyfin 10.11.x.
 
 The `Jellyfin.Controller` package version must match your server version, otherwise the
 plugin is reported as *NotSupported* and will not load.

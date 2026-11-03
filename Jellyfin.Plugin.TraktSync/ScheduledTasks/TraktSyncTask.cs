@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Jellyfin.Data.Enums;
 using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Plugin.TraktSync.Trakt;
@@ -507,6 +508,7 @@ public class TraktSyncTask : IScheduledTask
             var body = new Dictionary<string, object>(StringComparer.Ordinal) { ["movies"] = movies };
             var resp = await trakt.AddToHistoryAsync(body, cancellationToken).ConfigureAwait(false);
             _logger.LogInformation("Trakt added {Count} movies", resp?.Added?.Movies ?? 0);
+            LogNotFound(resp);
         }
 
         for (var i = 0; i < shows.Count; i += batchSize)
@@ -521,7 +523,86 @@ public class TraktSyncTask : IScheduledTask
                 "Batch {Batch}: Trakt added {Count} episodes",
                 (i / batchSize) + 1,
                 resp?.Added?.Episodes ?? 0);
+            LogNotFound(resp);
         }
+    }
+
+    /// <summary>
+    /// Trakt silently drops items it cannot match and reports them under
+    /// not_found. Surfacing them is the only way to spot a show that needs a
+    /// split override or an episode Trakt does not list.
+    /// </summary>
+    /// <param name="resp">Response from /sync/history.</param>
+    private void LogNotFound(TraktSyncResponse? resp)
+    {
+        if (resp?.NotFound is not { ValueKind: JsonValueKind.Object } notFound)
+        {
+            return;
+        }
+
+        foreach (var category in notFound.EnumerateObject())
+        {
+            if (category.Value.ValueKind != JsonValueKind.Array || category.Value.GetArrayLength() == 0)
+            {
+                continue;
+            }
+
+            foreach (var entry in category.Value.EnumerateArray())
+            {
+                _logger.LogWarning(
+                    "Trakt could not match {Category} item: {Item}",
+                    category.Name,
+                    DescribeNotFound(entry));
+            }
+        }
+    }
+
+    private static string DescribeNotFound(JsonElement entry)
+    {
+        if (entry.ValueKind != JsonValueKind.Object)
+        {
+            return entry.GetRawText();
+        }
+
+        var parts = new List<string>();
+
+        if (entry.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
+        {
+            parts.Add(title.GetString() ?? string.Empty);
+        }
+
+        if (entry.TryGetProperty("ids", out var ids) && ids.ValueKind == JsonValueKind.Object)
+        {
+            parts.Add("[" + string.Join(", ", ids.EnumerateObject().Select(p => p.Name + "=" + p.Value)) + "]");
+        }
+
+        if (entry.TryGetProperty("seasons", out var seasons) && seasons.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var season in seasons.EnumerateArray())
+            {
+                if (!season.TryGetProperty("number", out var sn) || !sn.TryGetInt32(out var seasonNumber))
+                {
+                    continue;
+                }
+
+                if (season.TryGetProperty("episodes", out var episodes) && episodes.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var episode in episodes.EnumerateArray())
+                    {
+                        if (episode.TryGetProperty("number", out var en) && en.TryGetInt32(out var episodeNumber))
+                        {
+                            parts.Add(TraktClient.FormatEpisodeCode(seasonNumber, episodeNumber));
+                        }
+                    }
+                }
+                else
+                {
+                    parts.Add(string.Format(CultureInfo.InvariantCulture, "S{0:D2}", seasonNumber));
+                }
+            }
+        }
+
+        return parts.Count > 0 ? string.Join(" ", parts) : entry.GetRawText();
     }
 
     private sealed class ShowBucket

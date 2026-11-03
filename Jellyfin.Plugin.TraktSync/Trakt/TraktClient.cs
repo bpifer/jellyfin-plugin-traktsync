@@ -15,10 +15,13 @@ public class TraktClient
     private const string BaseUrl = "https://api.trakt.tv";
 
     /// <summary>
-    /// Trakt access tokens last 90 days. Refresh only inside this window so a
-    /// single-use refresh token is not burned on every run.
+    /// Trakt access tokens currently last 7 days. Refresh only inside this window
+    /// so a single-use refresh token is not rotated on every daily run.
     /// </summary>
-    private const int RefreshThresholdDays = 7;
+    private const int RefreshThresholdDays = 2;
+
+    /// <summary>Assumed token lifetime when Trakt omits expires_in.</summary>
+    private const long DefaultTokenLifetimeSeconds = 7 * 86400;
 
     private readonly HttpClient _http;
     private readonly ILogger _logger;
@@ -127,7 +130,7 @@ public class TraktClient
         AccessToken = token.AccessToken;
         RefreshToken = token.RefreshToken;
         TokenExpiresAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-            + (token.ExpiresIn > 0 ? token.ExpiresIn : 7776000);
+            + (token.ExpiresIn > 0 ? token.ExpiresIn : DefaultTokenLifetimeSeconds);
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.TraktSync.Trakt;
@@ -104,4 +105,11 @@ public class TraktSyncResponse
     /// <summary>Gets or sets the updated counts.</summary>
     [JsonPropertyName("updated")]
     public TraktSyncCounts? Updated { get; set; }
+
+    /// <summary>
+    /// Gets or sets the items Trakt could not match. Kept as raw JSON because its
+    /// shape varies by category (movies, shows, seasons, episodes, ids).
+    /// </summary>
+    [JsonPropertyName("not_found")]
+    public JsonElement? NotFound { get; set; }
 }

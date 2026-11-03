@@ -1,8 +1,8 @@
 ---
 name: "Trakt Sync"
 guid: "b8f2a1c4-6d3e-4f7a-9c25-1e8b7d4a3f60"
-version: "1.0.1.0"
-targetAbi: "10.11.0.0"
+version: "2.1.0.0"
+targetAbi: "12.0.0.0"
 framework: "net10.0"
 owner: "bpifer"
 overview: "One-way Jellyfin to Trakt watched-state sync"
@@ -13,4 +13,4 @@ description: >
 category: "General"
 artifacts:
   - "Jellyfin.Plugin.TraktSync.dll"
-changelog: "Initial release."
+changelog: "Maps Jury Duty S2 and the Kitchen Nightmares 2023 revival to their own Trakt shows, logs items Trakt cannot match, and refreshes the 7-day Trakt token only within 2 days of expiry."
