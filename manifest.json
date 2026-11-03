@@ -9,6 +9,14 @@
         "imageUrl": "",
         "versions": [
             {
+                "version": "2.1.1.0",
+                "changelog": "Maps Monster S1/S2 (and S3), Jury Duty S2 and the Kitchen Nightmares 2023 revival to their own Trakt shows, logs items Trakt cannot match, and refreshes the 7-day Trakt token only within 2 days of expiry.",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/bpifer/jellyfin-plugin-traktsync/releases/download/v2.1.1.0/traktsync_2.1.1.0.zip",
+                "checksum": "eb0a1d0115adee3065d28b1110efd8a0",
+                "timestamp": "2026-11-03T16:21:44Z"
+            },
+            {
                 "version": "2.0.0.0",
                 "changelog": "Targets Jellyfin 12 (net10.0). No functional changes.",
                 "targetAbi": "12.0.0.0",
